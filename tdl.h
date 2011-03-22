@@ -60,6 +60,7 @@ struct node {
   long done;
   char *scratch; /* For functions to attach stuff to nodes */
   int iscratch;  /* More scratch space */
+  int idx; /* Keep your number, even after having been sorted. */
   char flag;
 };
 

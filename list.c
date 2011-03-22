@@ -237,17 +237,77 @@ static void print_details(struct node *y, int indent, int summarise_kids, const 
 
 }
 /*}}}*/
+/* 1 if x has lower priority than y. */
+static int node_lessthan(struct node *x, struct node *y)/*{{{*/
+{
+  if (x->priority < y->priority)
+    return 1;
+  if (x->priority > y->priority)
+    return 0;
+  if (x->required_by == 0 && y->required_by == 0)
+    return (x->idx > y->idx);
+  if (y->required_by == 0)
+    return 1;
+  if (x->required_by == 0)
+    return 0;
+  return x->required_by < y->required_by;
+}
+/*}}}*/
+static void sort_chain(struct links *x)/*{{{*/
+{
+  struct links new;
+  struct node *y, *ynext, *yprev;
+  int idx;
+  
+  new.next = NULL;
+  new.prev = NULL;
+  
+  /* Stupidsort. */
+  for (y = x->next, idx = 1; y != (struct node *) x; y = ynext, ++idx) {
+    /* y is now the current node; go insert it into its rightful place in
+     * the new chain.  */
+    struct node **nextp = &(new.next);
+    struct node *ins;
+    for (ins = new.next; ins && node_lessthan(ins, y); nextp = &(ins->chain.next), ins = ins->chain.next)
+      ;
+    y->chain.next->chain.prev = y->chain.prev;
+    y->chain.prev->chain.next = y->chain.next;
+    ynext = y->chain.next;
+    y->chain.next = *nextp;
+    *nextp = y;
+    y->idx = idx;
+  }
+  
+  /* Now clean up the new links. */
+  yprev = (struct node *)x;
+  for (y = new.next; y; yprev = y, y = y->chain.next) {
+    y->chain.prev = yprev;
+  }
+  yprev->chain.next = (struct node *)x;
+  new.prev = y;
+  
+  if (new.next == NULL) {
+    x->next = (struct node *)x;
+    x->prev = (struct node *)x;
+  } else {
+    x->next = new.next;
+    x->prev = new.prev;
+  }
+}
+/*}}}*/
 static void list_chain(struct links *x, int indent, int depth, const struct list_options *options, char *index_buffer, enum Priority prio, time_t now, unsigned char *hits)/*{{{*/
 {
   struct node *y;
-  int idx, is_done, is_deferred, is_postponed;
+  int is_done, is_deferred, is_postponed;
   int show_node;
   char component_buffer[8];
   char new_index_buffer[64];
   
-  for (y = x->next, idx = 1;
+  sort_chain(x);
+    
+  for (y = x->next;
        y != (struct node *) x;
-       y = y->chain.next, ++idx) {
+       y = y->chain.next) {
     
     is_done = (y->done > 0);
     is_postponed = (y->arrived == POSTPONED_TIME);
@@ -257,7 +317,7 @@ static void list_chain(struct links *x, int indent, int depth, const struct list
              || (!is_deferred && !is_postponed);
     if (!show_node) continue;
 
-    sprintf(component_buffer, "%d", idx);
+    sprintf(component_buffer, "%d", y->idx);
     strcpy(new_index_buffer, index_buffer);
     if (strlen(new_index_buffer) > 0) {
       strcat(new_index_buffer, ".");
