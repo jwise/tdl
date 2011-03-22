@@ -1,0 +1,27 @@
+Although tdl does not use autoconf, it does have a hand-rolled configure script.
+
+To build the program do
+
+    ./configure
+    make
+    make install
+
+You can see what options ./configure can take with
+
+    ./configure --help
+
+For example, you might want to use --prefix to install the software in a
+non-standard location.
+
+To get started,
+
+    tdl create
+    tdl add "Some task I have to do"
+    tdl list
+
+It's suggested that you try
+
+    man tdl
+
+as well.
+

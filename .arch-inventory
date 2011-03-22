@@ -1,0 +1,4 @@
+backup ^(Makefile|config\.log|tdl)$
+backup ^tdl\.(aux|cp|dvi|fn|html|info|ky|log|pdf|pg|toc|tp|txt|vr)$
+precious ^\.tdldb$
+
