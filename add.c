@@ -23,7 +23,7 @@
 #include <ctype.h>
 #include "tdl.h"
 
-static int add_new_node(char *parent_path, int set_done, int set_priority, enum Priority new_priority, time_t insert_time, char *child_text)/*{{{*/
+static int add_new_node(char *parent_path, int set_done, int set_priority, enum Priority new_priority, time_t insert_time, time_t required_by, char *child_text)/*{{{*/
 {
   struct node *parent = NULL;
   struct node *nn;
@@ -48,6 +48,7 @@ static int add_new_node(char *parent_path, int set_done, int set_priority, enum 
   if (set_done) {
     nn->done = (long) insert_time;
   }
+  nn->required_by = required_by;
   
   nn->priority = (parent && !set_priority) ? parent->priority
                                            : new_priority;
@@ -114,7 +115,7 @@ static int try_add_interactive(char *parent_path, int set_done)/*{{{*/
     if (error < 0) return error;
     if (!blank) {
       time(&insert_time);
-      status = add_new_node(parent_path, set_done, 0, PRI_NORMAL, insert_time, text);
+      status = add_new_node(parent_path, set_done, 0, PRI_NORMAL, insert_time, 0, text);
       free(text);
       if (status < 0) return status;
     }
@@ -161,8 +162,10 @@ static int process_add_internal(char **x, int set_done)/*{{{*/
   int set_priority = 0;
   char *x0;
   int error;
+  time_t required_by;
 
   insert_time = time(NULL);
+  required_by = 0;
 
   if ((argc > 1) && (x[0][0] == '@')) {
     int error;
@@ -170,6 +173,14 @@ static int process_add_internal(char **x, int set_done)/*{{{*/
      * For 'log', want date to be in the past, as for 'done' */
     int default_positive = set_done ? 0 : 1;
     insert_time = parse_date(x[0]+1, insert_time, default_positive, &error);
+    if (error < 0) return error;
+    argc--;
+    x++;
+  }
+  
+  if ((argc > 1) && (x[0][0] == '+')) {
+    int error;
+    required_by = parse_date(x[0]+1, insert_time, 1, &error);
     if (error < 0) return error;
     argc--;
     x++;
@@ -206,12 +217,12 @@ static int process_add_internal(char **x, int set_done)/*{{{*/
       break;
 
     default:
-      fprintf(stderr, "Usage : add [@<datespec>] [<parent_index>] [<priority>] <entry_text>\n");
+      fprintf(stderr, "Usage : add [@<starting datespec>] [+<due datespec>] [<parent_index>] [<priority>] <entry_text>\n");
       return -1;
       break;
   }
 
-  return add_new_node(parent_path, set_done, set_priority, priority, insert_time, text);
+  return add_new_node(parent_path, set_done, set_priority, priority, insert_time, required_by, text);
 
   return 0;
 }
