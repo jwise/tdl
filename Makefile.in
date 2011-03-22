@@ -68,6 +68,8 @@ main.o : version.h
 %.s : %.c
 	$(CC) $(CFLAGS) -S $<
 
+.PHONY: clean distclean install
+
 clean:
 	rm -f tdl *.o core \
 	tdl.vr tdl.tp tdl.pg tdl.ky tdl.fn tdl.cp \
