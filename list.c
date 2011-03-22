@@ -219,6 +219,34 @@ static void print_details(struct node *y, int indent, int summarise_kids, const 
     }
   }
   if (!options->monochrome) printf("%s", NORMAL);
+  if (y->required_by > 0) {
+    time_t delta = y->required_by - time(NULL);
+    if (delta < 0) {
+      printf(options->monochrome ?
+               " [OVERDUE]" :
+               RED " [OVERDUE]" NORMAL);
+    } else if (delta < 24*60*60) {
+      printf(options->monochrome ?
+               "  [due <24hr]" :
+               RED " [due <24hr]" NORMAL);
+    } else if (delta < 2*24*60*60) {
+      printf(options->monochrome ?
+               "  [due <2d]" :
+               RED " [due <2d]" NORMAL);
+    } else if (delta < 3*24*60*60) {
+      printf(options->monochrome ?
+               "  [due <3d]" :
+               YELLOW " [due <3d]" NORMAL);
+    } else if (delta < 4*24*60*60) {
+      printf(options->monochrome ?
+               "  [due <4d]" :
+               YELLOW " [due <4d]" NORMAL);
+    } else if (delta < 5*24*60*60) {
+      printf(options->monochrome ?
+               "  [due <5d]" :
+               GREEN " [due <5d]" NORMAL);
+    }
+  }
   printf("\n");
 
   if (options->verbose) {
