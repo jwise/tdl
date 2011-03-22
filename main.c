@@ -628,6 +628,9 @@ int n_cmds = 0;
 static int is_processing = 0;
 static int signal_count = 0;
 
+static char *executable;
+static int is_tdl = 0;
+
 static void handle_signal(int a)/*{{{*/
 {
   signal_count++;
@@ -689,8 +692,6 @@ static void print_copyright(void)/*{{{*/
 void dispatch(char **argv) /* and other args *//*{{{*/
 {
   int i, p_len, matchlen, index=-1;
-  char *executable;
-  int is_tdl;
   char **p, **pp;
 
   if (signal_count > 0) {
@@ -698,11 +699,9 @@ void dispatch(char **argv) /* and other args *//*{{{*/
     unlock_and_exit(0);
   }
 
-  executable = executable_name(argv[0]);
-  is_tdl = (!strcmp(executable, "tdl"));
-  
   p = argv + 1;
-  while (*p && *p[0] == '-') p++;
+  if (is_tdl)
+    while (*p && *p[0] == '-') p++;
   
   /* Parse command line */
   if (is_tdl && !*p) {
@@ -871,6 +870,10 @@ static int usage(char **x)/*{{{*/
 int main (int argc, char **argv)
 {
   int i = 0;
+  
+  executable = executable_name(argv[0]);
+  is_tdl = (!strcmp(executable, "tdl"));
+  
   n_cmds = N(cmds);
   is_interactive = 0;
   
@@ -878,7 +881,7 @@ int main (int argc, char **argv)
   top.prev = (struct node *) &top;
   top.next = (struct node *) &top;
 
-  if (argc > 1) {
+  if (argc > 1 && is_tdl) {
     for (i=1; i<argc && argv[i][0] == '-'; i++) {
       if (strspn(argv[i]+1, "qRu")+1 != strlen(argv[i])) {
         fprintf(stderr, "Unknown flag <%s>\n", argv[i]);
