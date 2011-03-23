@@ -272,7 +272,7 @@ static int node_lessthan(struct node *x, struct node *y)/*{{{*/
     return 1;
   if (x->priority < y->priority)
     return 0;
-  if (x->required_by == 0 && y->required_by == 0)
+  if (x->required_by == y->required_by)
     return (x->idx > y->idx);
   if (y->required_by == 0)
     return 1;
