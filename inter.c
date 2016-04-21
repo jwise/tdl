@@ -44,6 +44,10 @@
 
 #endif
 
+#if defined(_RL_FUNCTION_TYPEDEF)
+typedef rl_hook_func_t Function;
+typedef rl_completion_func_t CPPFunction;
+#endif
 
 #ifdef USE_READLINE
 static char *generate_a_command_completion(const char *text, int state)/*{{{*/
