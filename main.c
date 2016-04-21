@@ -441,12 +441,13 @@ static char synop_help[] = "[<command-name>]";
 static char synop_ignore[] = "<entry_index>[...] ...";
 static char synop_import[] = "<filename>";
 static char synop_into[] = "<new_parent_index> <index_to_move> ...";
-static char synop_list[] = "[-v] [-a] [-p] [-m] [-1..9] [<min-priority>] [<parent_index>|/<search_condition>...]\n"
+static char synop_list[] = "[-v] [-a] [-p] [-m] [-r <datespec>] [-1..9] [<min-priority>] [<parent_index>|/<search_condition>...]\n"
                            "-v                 : verbose (show dates, priorities etc)\n"
                            "-a                 : show all entries, including 'done' ones\n"
                            "-p                 : show deferred and postponed entries\n"
                            "-m                 : don't use colours (monochrome)\n"
                            "-1,-2,..,-9        : summarise (and don't show) entries below this depth\n"
+                           "-r <datespec>      : show a report of work added and finished since <datespec>\n"
                            "<search_condition> : word to match on";
 static char synop_log[] = "[@<datespec>] [<parent_index>] [<priority>] <entry_text>";
 static char synop_moveto[] = "<new_parent_index> <index_to_move> ...";
