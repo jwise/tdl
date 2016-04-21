@@ -28,10 +28,12 @@
 
 struct list_options {
   unsigned monochrome:1;
-  unsigned show_all:1;
+  unsigned show_all; /* available multiple times */
   unsigned show_postponed:1;
   unsigned verbose:1;
   unsigned set_depth:1;
+  unsigned report:1;
+  time_t report_tm;
   int depth;
 };
 
@@ -136,9 +138,28 @@ static void print_details(struct node *y, int indent, int summarise_kids, const 
   is_ignored = (y->done == IGNORED_TIME);
   is_postponed = (y->arrived == POSTPONED_TIME);
   is_deferred = (y->arrived > now);
-  if (!options->show_all && is_done) return;
+  if (options->report) {
+    if (!y->flag && !options->show_all) return;
+    if (!y->flag && is_done && (options->show_all < 2)) return;
+  } else
+    if (!options->show_all && is_done) return;
+
+  if (options->report) {
+    if (y->arrived >= options->report_tm)
+      printf(options->monochrome ?
+               "+" :
+               YELLOW "+" NORMAL);
+    else printf(" ");
+    
+    if (y->done >= options->report_tm)
+      printf(options->monochrome ?
+               "-" :
+               GREEN "-" NORMAL);
+    else printf(" ");
+  }
 
   do_indent(indent);
+
   count_kids(&y->kids, &n_kids, NULL, &n_open_kids);
   show_state = options->show_all || options->show_postponed;
   index_buffer_len = strlen(index_buffer);
@@ -550,6 +571,31 @@ get_out:
   return;
 }
 /*}}}*/
+
+static int mark_nodes_for_report(struct links *x, time_t start, time_t end)/*{{{*/
+{
+  int flag_set = 0;
+  struct node *y;
+
+  for (y = x->next; y != (struct node *) x; y = y->chain.next) {
+    if (((y->done >= start) && (y->done <= end)) ||
+        ((y->arrived >= start) && (y->arrived <= end))) {
+      y->flag = 1;
+      flag_set = 1;
+    }
+
+    if (has_kids(y)) {
+      if (mark_nodes_for_report(&y->kids, start, end)) {
+        y->flag = 1;
+        flag_set = 1;
+      }
+    }
+  }
+  return flag_set;
+}
+/*}}}*/
+
+
 int process_list(char **x)/*{{{*/
 {
   struct list_options options;
@@ -625,7 +671,7 @@ int process_list(char **x)/*{{{*/
             options.verbose = 1;
             break;
           case 'a':
-            options.show_all = 1;
+            options.show_all++;
             break;
           case 'm':
             options.monochrome = 1;
@@ -639,11 +685,25 @@ int process_list(char **x)/*{{{*/
             options.set_depth = 1;
             options.depth = (*y) - '1';
             break;
+          case 'r':
+            options.report = 1;
+            options.report_tm = now - 7*24*60*60;;
+            x++;
+            y = *x;
+            if (y) {
+              int error;
+              if (*y == '@') y++;
+              options.report_tm = parse_date(y, now, 0, &error);
+              if (error < 0) return error;
+            } else
+              x--; /* squawk. */
+            goto longarg;
           default:
             fprintf(stderr, "Unrecognized option : -%c\n", *y);
             break;
         }
       }
+longarg: ;
     } else if (y[0] == '/') {
       /* search expression */
       merge_search_condition(hits, n_nodes, y+1);
@@ -656,6 +716,11 @@ int process_list(char **x)/*{{{*/
     }
 
     x++;
+  }
+  
+  if (options.report) {
+    clear_flags(&top);
+    mark_nodes_for_report(&top, options.report_tm, now);
   }
   
   if (!any_paths) {
