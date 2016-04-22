@@ -615,6 +615,7 @@ int process_list(char **x)/*{{{*/
   options.show_postponed = 0;
   options.verbose = 0;
   options.set_depth = 0;
+  options.report = 0;
 
   if ( (getenv("TDL_LIST_MONOCHROME") != NULL) ||
        (isatty(STDOUT_FILENO) == 0) ) {
