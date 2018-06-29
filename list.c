@@ -363,7 +363,8 @@ static void list_chain(struct links *x, int indent, int depth, const struct list
     is_deferred = (y->arrived > now);
     show_node = options->show_all 
              || (options->show_postponed && !is_done)
-             || (!is_deferred && !is_postponed);
+             || (!is_deferred && !is_postponed)
+             || options->report;
     if (!show_node) continue;
 
     sprintf(component_buffer, "%d", y->idx);
