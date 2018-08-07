@@ -294,7 +294,7 @@ static int node_lessthan(struct node *x, struct node *y)/*{{{*/
   if (x->priority < y->priority)
     return 0;
   if (x->required_by == y->required_by)
-    return (x->idx > y->idx);
+    return (x->idx < y->idx);
   if (y->required_by == 0)
     return 1;
   if (x->required_by == 0)
@@ -311,8 +311,13 @@ static void sort_chain(struct links *x)/*{{{*/
   new.next = NULL;
   new.prev = NULL;
   
+  /* Give them all numbers in advance to stabilize the sort. */
+  for (y = x->next, idx = 1; y != (struct node *) x; y = y->chain.next, ++idx) {
+    y->idx = idx;
+  }
+
   /* Stupidsort. */
-  for (y = x->next, idx = 1; y != (struct node *) x; y = ynext, ++idx) {
+  for (y = x->next; y != (struct node *) x; y = ynext) {
     /* y is now the current node; go insert it into its rightful place in
      * the new chain.  */
     struct node **nextp = &(new.next);
@@ -324,7 +329,6 @@ static void sort_chain(struct links *x)/*{{{*/
     ynext = y->chain.next;
     y->chain.next = *nextp;
     *nextp = y;
-    y->idx = idx;
   }
   
   /* Now clean up the new links. */
